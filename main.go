@@ -3,26 +3,23 @@ package main
 import (
   "fmt"
   "sync"
+  "sync/atomic"
 )
 
-var count int
-var mutex sync.Mutex
-
 func main() {
+  var counter int64
   var wg sync.WaitGroup
-  for i := 0; i < 10; i++ {
-    wg.Add(1)
-    go increment(&wg)
+
+  numGoroutines := 5
+  wg.Add(numGoroutines)
+
+  for i := 0; i < numGoroutines; i++ {
+    go func() {
+      defer wg.Done()
+      atomic.AddInt64(&counter, 1)
+    }()
   }
   wg.Wait()
 
-  fmt.Println("Final count:", count)
-}
-
-func increment(wg *sync.WaitGroup) {
-  defer wg.Done()
-  mutex.Lock()
-  defer mutex.Unlock()
-
-  count++
+  fmt.Println("Counter: ", atomic.LoadInt64(&counter))
 }
