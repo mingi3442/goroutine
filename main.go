@@ -3,28 +3,26 @@ package main
 import (
   "fmt"
   "sync"
-  "time"
 )
 
+var count int
+var mutex sync.Mutex
+
 func main() {
-  tasks := []string{"task1", "task2", "task3", "task4", "task5"}
-
-  concurrencyLimit := 2
-  sem := make(chan struct{}, concurrencyLimit)
-
   var wg sync.WaitGroup
-  for _, task := range tasks {
+  for i := 0; i < 10; i++ {
     wg.Add(1)
-    go func(task string) {
-      defer wg.Done()
-      sem <- struct{}{}
-      defer func() { <-sem }()
-
-      // Perform task logic here
-      fmt.Println("Processing: ", task)
-      time.Sleep(1 * time.Second)
-    }(task)
+    go increment(&wg)
   }
-
   wg.Wait()
+
+  fmt.Println("Final count:", count)
+}
+
+func increment(wg *sync.WaitGroup) {
+  defer wg.Done()
+  mutex.Lock()
+  defer mutex.Unlock()
+
+  count++
 }
