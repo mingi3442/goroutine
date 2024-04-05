@@ -1,25 +1,23 @@
 package main
 
 import (
+  "context"
   "fmt"
-  "sync"
-  "sync/atomic"
+  "time"
 )
 
 func main() {
-  var counter int64
-  var wg sync.WaitGroup
+  ctx, cancel := context.WithCancel(context.Background())
 
-  numGoroutines := 5
-  wg.Add(numGoroutines)
+  go func() {
+    // Simulate a long-running task
+    time.Sleep(3 * time.Second)
+    cancel() // Cancel the context after 3 second
+  }()
 
-  for i := 0; i < numGoroutines; i++ {
-    go func() {
-      defer wg.Done()
-      atomic.AddInt64(&counter, 1)
-    }()
+  select {
+  case <-ctx.Done():
+    fmt.Println("Task canceled")
   }
-  wg.Wait()
 
-  fmt.Println("Counter: ", atomic.LoadInt64(&counter))
 }
